@@ -17,7 +17,8 @@ public class ReplacingBigDecimal extends TestCase {
 		static BigDecimal roundToTwoPlaces(BigDecimal n) {
 			// To make sure, that the input has three decimal places.
 			checkArgument(n.scale() == 3);
-			return n.round(new MathContext(2, RoundingMode.HALF_EVEN));
+			final BigDecimal result = n.setScale(2, RoundingMode.HALF_EVEN);
+			return result;
 		}
 	}
 
@@ -29,7 +30,10 @@ public class ReplacingBigDecimal extends TestCase {
 
 	public static class Correct {
 		static double roundToTwoPlaces(double n) {
-			return Math.round(100.0 * n) / 100.0;
+			final long m = Math.round(1000.0 * n);
+			final double x = 0.1 * m;
+			final long r = (long) Math.rint(x);
+			return r / 100.0;
 		}
 	}
 
@@ -40,18 +44,22 @@ public class ReplacingBigDecimal extends TestCase {
 		assertEquals(expected, actual);
 	}
 
-	// Expected to fail, but it doesn't.
+	// Failures are expected!
 	public void testNaive() {
-		final double n = 0.615;
-		final double expected = 0.62;
-		final double actual = Naive.roundToTwoPlaces(n);
-		assertEquals(String.valueOf(expected), String.valueOf(actual));
+		for (int i=0; i<10000; ++i) {
+			final BigDecimal n = BigDecimal.valueOf(5 + 10*i, 3);
+			final double expected = Exact.roundToTwoPlaces(n).doubleValue();
+			final double actual = Naive.roundToTwoPlaces(n.doubleValue());
+			assertEquals(String.valueOf(expected), String.valueOf(actual));
+		}
 	}
 
 	public void testCorrect() {
-		final double n = 0.615;
-		final double expected = 0.62;
-		final double actual = Correct.roundToTwoPlaces(n);
-		assertEquals(String.valueOf(expected), String.valueOf(actual));
+		for (int i=0; i<10000; ++i) {
+			final BigDecimal n = BigDecimal.valueOf(5 + 10*i, 3);
+			final double expected = Exact.roundToTwoPlaces(n).doubleValue();
+			final double actual = Correct.roundToTwoPlaces(n.doubleValue());
+			assertEquals(String.valueOf(expected), String.valueOf(actual));
+		}
 	}
 }
